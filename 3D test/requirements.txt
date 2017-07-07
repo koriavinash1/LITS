@@ -1,0 +1,5 @@
+SimpleITK
+tensorflow
+numpy
+pandas
+nibabel

@@ -1,0 +1,127 @@
+import tensorflow as tf
+import dataloader
+dataset = dataloader.load_dataSets()
+from 3D_TF_ops import BatchNormalization, Conv3D, Concatenate, MaxPooling3D,\
+			Deconv3D
+from config import FLAGS
+
+volume_input = tf.placeholder(shape=(None, None, None, None), name='mainInput')
+segmentation_map = tf.placeholder(shape=(None, None, None, None), 
+					name="segmentation_map")
+
+class DenseVoxNet(object):
+	"""docstring for DenseNet"""
+
+	def denseBlock(self, layers, name, volumes_):
+		for i in xrange(layers:)
+			BN = BatchNormalization(name='bn_'+name+str(i),
+						data=volumes_,
+						training=phase_train)
+			conv = Conv3D(filters=32, 
+					name='convolution_'+name+str(i),
+					kernel_size=[3,3,3],
+					activation=None,
+					data=BN)
+			volumes_ = Concatenate([volumes_, conv], 
+					name='concatenate_'+name+str(i))
+		return volumes_
+
+	def graph(self, volume_input):
+		layer1 = Conv3D(filters=16, 
+				name='layer1', 
+				kernel_size=[3,3,3],
+				activation=None, 
+				data=volume_input)
+		dense1 = self.denseBlock(12, "dense_1", layer1)
+
+		layer2 = BatchNormalization(name="layer2", 
+				data=dense1, 
+				training=phase_train)
+		layer2 = Conv3D(filters=160, 
+				name='layer2_conv', 
+				kernel_size=(1,1,1),
+				activation=None,
+				data=layer2)
+		layer2 = MaxPooling3D(data=layer2, 
+				pool_size=(2,2,2), 
+				name="layer2_pool")
+
+		dense2 = self.denseBlock(12,'dense_2',layer2)
+		layer3 = BatchNormalization(name="layer3", 
+				data=dense2, 
+				training=phase_train)
+		layer3 = Conv3D(filters=304, 
+				name='layer3_conv', 
+				kernel_size=(1,1,1),
+				activation=None,
+				data=layer3)
+		layer3 = MaxPooling3D(data=layer3, 
+				pool_size=(2,2,2), 
+				name="layer2_pool")
+
+		deconv1 = Deconv3D(data=layer3, 
+				filters=128, 
+				kernel_size=(3,3,3),
+				strides=(2,2,2),
+				name="deconv_1")
+		deconv2 = Deconv3D(data=deconv1, 
+				filters=64, 
+				kernel_size=(3,3,3),
+				strides=(2,2,2), 
+				name="deconv_2")
+		return deconv2
+
+	def loss(self, pred, segmentation_map):
+		error = tf.contrib.losses.mean_squared_error(
+				pred,
+				labels=segmentation_map,
+				weights=1.0,
+				scope=None)
+		return error
+
+	def optimizer(self, cost, global_step):
+		lr = tf.train.exponential_decay(FLAGS.learning_rate,
+				global_step,
+				FLAGS.decay_steps,
+				FLAGS.decay_factor,
+				staircase=True)
+		return tf.train.AdamOptimizer(learning_rate=lr).minimize(cost)
+
+
+
+def train():
+	param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
+			tf.get_default_graph(),
+			tfprof_options=tf.contrib.tfprof.model_analyzer.
+					TRAINABLE_VARS_PARAMS_STAT_OPTIONS)
+	sys.stdout.write('total_params: %d\n' % param_stats.total_parameters)
+
+	network = DenseVoxNet()
+	with tf.Session() as sess:
+		ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+		if ckpt and ckpt.model_checkpoint_path:
+			saver.restore(sess, ckpt.model_checkpoint_path)
+			global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+		else:
+			print('No checkpoint file found')
+			global_step = tf.contrib.framework.get_or_create_global_step()
+		
+		with  tf.device(FLAGS.device):
+			step = 0
+			while dataset.epochs_completed <= FLAGS.epochs:
+				volume, seg_map = dataset.train.next_batch(batch_size)
+				pred = network.graph(volume_input)
+				cost = network.loss(pred, segmentation_map)
+				opti = network.optimizer(cost)
+
+				_, loss = sess.run([opti, cost], feed_dict = { volume_input:volume, segmentation_map: seg_map})
+				if step %  FLAGS.eval_interval == 0:
+					save_path = saver.save(sess, FLAGS.checkpoint_dir)
+
+				if step % FLAGS.log_frequency ==0:
+					print "step :{}, epochs: {}, loss: {}".format(step, dataset.epochs_completed, loss)
+				step +=1
+	pass
+
+if __name__ == "__main__":
+	train()

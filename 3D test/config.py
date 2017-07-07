@@ -1,12 +1,13 @@
 import tensorflow as tf
 
+
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_dir', "media/koriavinash/New Volume/Research/Deep Learning/LITS/NewDataSet/",
-		"""Directory where to write event logs and checkpoint.""")
-tf.app.flags.DEFINE_string('checkpoint_dir', '../results/logs/model.ckpt',
+tf.app.flags.DEFINE_string('train_dir', "../../DataSet/NewDataSet",
+		"""Directory to load train data""")
+tf.app.flags.DEFINE_string('checkpoint_dir', '../../results/logs/model.ckpt',
 		"""Directory where to read model checkpoints.""")
-tf.app.flags.DEFINE_string('log_dir','./logs/model.ckpt',
+tf.app.flags.DEFINE_string('log_dir','../../results/logs/model.ckpt',
 		"""Directory to save logs and models""")
 
 tf.app.flags.DEFINE_integer('epochs', 100 ,

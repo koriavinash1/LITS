@@ -4,12 +4,12 @@ import nibabel as nib
 import SimpleITK as sitk
 import time
 
-img_src_path = "/media/koriavinash/New Volume/Research/Deep Learning/LITS/Training Batch 1/"
-img_des_path = "/media/koriavinash/New Volume/Research/Deep Learning/LITS/NewDataSet/"
+img_src_path = "../../DataSet/Training Batch 1/"
+img_des_path = "../../DataSet/NewDataSet/"
 if not os.exists(img_des_path):
     os.mkdir(img_des_path)
 
-csv_path =  "/media/koriavinash/New Volume/Research/Deep Learning/LITS/DataInfo.csv"
+csv_path =  "../DataSet/DataInfo.csv"
 fileHeaders = "OriginalImage, OriginalSize, OriginalSpacing"
 
 labelFile = open(csv_path, 'w')

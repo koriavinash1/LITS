@@ -1,19 +1,21 @@
 import tensorflow as tf
 import dataloader
 dataset = dataloader.load_dataSets()
-from 3D_TF_ops import BatchNormalization, Conv3D, Concatenate, MaxPooling3D,\
+from TF_3D_ops import BatchNormalization, Conv3D, Concatenate, MaxPooling3D,\
 			Deconv3D
 from config import FLAGS
+import sys, os
 
-volume_input = tf.placeholder(shape=(None, None, None, None), name='mainInput')
+volume_input = tf.placeholder(shape=(None, None, None, None), 
+							name='mainInput', dtype=tf.float32)
 segmentation_map = tf.placeholder(shape=(None, None, None, None), 
-					name="segmentation_map")
+					name="segmentation_map", dtype=tf.float32)
 
 class DenseVoxNet(object):
 	"""docstring for DenseNet"""
 
 	def denseBlock(self, layers, name, volumes_):
-		for i in xrange(layers:)
+		for i in xrange(layers):
 			BN = BatchNormalization(name='bn_'+name+str(i),
 						data=volumes_,
 						training=phase_train)

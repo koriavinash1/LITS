@@ -82,6 +82,6 @@ def load_dataSets(train_volume_number = 25, test_volume_number = 3):
     train_volumes = train_volumes[test_volume_number:]
     train_segmentations = train_segmentations[test_volume_number:]
 
-    data_sets.train = DataSet(train_images, train_labels)
-    data_sets.test = DataSet(test_images, test_labels)
+    data_sets.train = DataSet(train_volumes, train_segmentations)
+    data_sets.test = DataSet(test_volumes, test_segmentations)
     return data_sets

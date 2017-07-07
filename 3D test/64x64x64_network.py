@@ -5,9 +5,10 @@ from 3D_TF_ops import BatchNormalization, Conv3D, Concatenate, MaxPooling3D,\
 			Deconv3D
 from config import FLAGS
 
-volume_input = tf.placeholder(shape=(None, None, None, None), name='mainInput')
+volume_input = tf.placeholder(shape=(None, None, None, None), 
+					name='mainInput', dtype=tf.float32)
 segmentation_map = tf.placeholder(shape=(None, None, None, None), 
-					name="segmentation_map")
+					name="segmentation_map", dtype=tf.float32)
 
 class DenseVoxNet(object):
 	"""docstring for DenseNet"""
@@ -72,9 +73,9 @@ class DenseVoxNet(object):
 		return deconv2
 
 	def loss(self, pred, segmentation_map):
-		error = tf.contrib.losses.mean_squared_error(
+		error = tf.contrib.losses.sigmoid_cross_entropy(
 				pred,
-				labels=segmentation_map,
+				multi_class_labels=segmentation_map,
 				weights=1.0,
 				scope=None)
 		return error
@@ -108,7 +109,7 @@ def train():
 		
 		with  tf.device(FLAGS.device):
 			step = 0
-			while dataset.epochs_completed <= FLAGS.epochs:
+			while dataset.train.epochs_completed <= FLAGS.epochs:
 				volume, seg_map = dataset.train.next_batch(batch_size)
 				pred = network.graph(volume_input)
 				cost = network.loss(pred, segmentation_map)

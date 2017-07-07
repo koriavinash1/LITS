@@ -6,10 +6,10 @@ import time
 
 img_src_path = "../../DataSet/Training Batch 1/"
 img_des_path = "../../DataSet/NewDataSet/"
-if not os.exists(img_des_path):
+if not os.path.exists(img_des_path):
     os.mkdir(img_des_path)
 
-csv_path =  "../DataSet/DataInfo.csv"
+csv_path =  "../../DataSet/DataInfo.csv"
 fileHeaders = "OriginalImage, OriginalSize, OriginalSpacing"
 
 labelFile = open(csv_path, 'w')
@@ -59,7 +59,7 @@ def generate_new_data(base_src_path, base_des_path):
 	img_paths = [os.path.join(base_src_path, f) for f in os.listdir(base_src_path) if f.endswith('.nii')]
 	for img_path in img_paths:
 		print "converting image: {}".format(img_path)
-		original_size, original_spacing = loadAconvert_nii_files(img_path)
+		original_size, original_spacing = loadAconvert_nii_files(img_path, base_des_path)
 		write_to_csv(csv_path, img_path+","+str(original_size)+","+str(original_spacing))
 	pass
 

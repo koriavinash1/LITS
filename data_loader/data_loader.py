@@ -92,10 +92,10 @@ class ITERATOR(object):
 			raise 1
 
 	def getDataFromPath(self,path):
-		h5 = h5py.File(path)
+		h5 = h5py.File(path,'r')
 		img = h5['image'][:]
 		lbl = h5['label'][:]
-		weight = h5['weight'][:]
+		weight = h5['weight_map'][:]
 
 		return img, lbl, weight
 

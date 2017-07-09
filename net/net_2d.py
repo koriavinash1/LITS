@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 import os, sys, shutil
 import tensorflow as tf
-sys.path.append(0,'../utils/')
+sys.path.insert(0,'../utils/')
 from train_utils import *
 
 class Tiramisu(object):
@@ -14,13 +14,13 @@ class Tiramisu(object):
 				n_feat_first_layer = 48, 
 				growth_rate = 16,
 				n_layers_per_block = 3, 
+				chief_class = 1,
 				weight_decay = 5e-6, 
 				keep_prob = 0.8, 
-				chief_class = 1,
-				metrics_list = ['loss', 'dice'],
+				metrics_list = ['loss', 'dice_score'],
+				metric_to_optimize = 'loss',
 				optimizer = Adam(1e-4),
-				gpu_ids =[1,2]
-				):
+				gpu_ids =[1,2]):
 		self.inputs = inputs
 		self.targets = targets
 		self.weight_maps = weight_maps
@@ -35,10 +35,32 @@ class Tiramisu(object):
 		self.optimizer = optimizer
 		self.gpu_ids = gpu_ids
 		self.num_gpus = len(self.gpu_ids)
+		self.metric_to_optimize = metric_to_optimize
 
 		self.image_splits = tf.split(self.inputs,self.num_gpus,0)
 		self.labels_splits = tf.split(self.targets,self.num_gpus,0)
 		self.weight_splits = tf.split(self.weight_maps,self.num_gpus,0)
+
+		self.is_training = tf.placeholder(tf.bool)
+		self.num_channels = inputs.get_shape()[-1].value
+		self.num_classes = targets.get_shape()[-1].value
+
+		self.logits = {}
+		self.posteriors = {}
+		self.predictions = {}
+		self.grads_dict = {}
+
+		self.stats_ops = {}
+		self.inference_ops = {}
+		self.accumulate_ops = {}
+		self.reset_ops = {}
+
+		for g in gpu_ids:
+			g = gpu_ids.index(g)
+			self.stats_ops[g] = {}
+			self.inference_ops[g] = {}
+			self.accumulate_ops[g] = []
+			self.reset_ops[g] = []
 
 		with tf.variable_scope(tf.get_variable_scope()) as vscope:
 			for i in gpu_ids:
@@ -46,21 +68,21 @@ class Tiramisu(object):
 				with tf.name_scope('tower_%d'%idx):
 					with tf.device('/gpu:%d'%i):
 						self.doForward(idx,
-										n_feat_first_layer = n_feat_first_layer,
-										n_pool = n_pool,
-										growth_rate = growth_rate,
-										n_layers_per_block = n_layers_per_block,
-										keep_prob = keep_prob
+										n_feat_first_layer = self.n_feat_first_layer,
+										n_pool = self.n_pool,
+										growth_rate = self.growth_rate,
+										n_layers_per_block = self.n_layers_per_block,
+										keep_prob = self.keep_prob
 										)
 						
 						self.calMetrics(idx)
 						tf.get_variable_scope().reuse_variables()
 
 		self.optimize()
-		self.addSummaries()
+		self.makeSummaries()
 
 
-	def doForward(idx, n_feat_first_layer, n_pool, growth_rate, n_layers_per_block, keep_prob):
+	def doForward(self,idx, n_feat_first_layer, n_pool, growth_rate, n_layers_per_block, keep_prob):
 		
 		assert type(n_layers_per_block) == int
 		n_layers_per_block = [n_layers_per_block] * (2 * n_pool + 1)
@@ -69,9 +91,9 @@ class Tiramisu(object):
 		tf.summary.image('inputs',inputs[:,:,:,1:2], max_outputs = 4, collections = ['per_100_steps'])
 
 		with tf.variable_scope('input_layer'):
-			stack = Conv2D(inputs, [3,3,inputs.get_shape()[-1].value,n_filters_first_conv],collection_name = 'input_layer', padding='SAME')
+			stack = Conv2D(inputs, [3,3,inputs.get_shape()[-1].value,n_feat_first_layer],collection_name = 'input_layer', padding='SAME')
 
-		n_filters = n_filters_first_conv
+		n_filters = n_feat_first_layer
 
 		skip_connection_list = []
 
@@ -137,7 +159,7 @@ class Tiramisu(object):
 			self.predictions[idx] = tf.cast(tf.argmax(self.logits[idx],3), tf.float32)
 			tf.summary.image('predictions',self.predictions[idx][:,:,:,None], max_outputs = 4, collections = ['per_100_steps'])
 
-	def buildInferences(self,gpu_id_idx):
+	def calMetrics(self,gpu_id_idx):
 		for metric_name in self.metrics_list:
 			metric_implemented = False
 			if metric_name == 'loss':

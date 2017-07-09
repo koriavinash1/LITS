@@ -6,8 +6,8 @@ import time
 sys.path.insert(0,'../utils/')
 from train_utils import *
 
-sys.path.insert(0,'../net/')
-from 2d_net import Tiramisu
+# sys.path.insert(0,'../net/')
+# from net_2d import Tiramisu
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(parents = [default_opts])
@@ -36,8 +36,11 @@ if __name__ == '__main__':
 					growth_rate=16, 
 					n_layers_per_block=5,
 					chief_class = opts.chief_class,
-					class_weights = [1.0,5.0],
-					gpu_ids = [2])
+					weight_decay = 5e-6, 
+					keep_prob = 0.8, 
+					metrics_list = ['loss', 'dice_score'],
+					optimizer = Adam(1e-4),
+					gpu_ids = [0])
 	
 	# initialise the estimator with the net 	
 	print('Preparing the estimator..')

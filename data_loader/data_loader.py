@@ -1,5 +1,5 @@
 from __future__ import division
-import numpyp as np
+import numpy as np
 import os, sys, shutil
 import h5py
 import random, time
@@ -7,6 +7,9 @@ import scipy.ndimage as snd
 import skimage.morphology as morph
 import weakref
 import threading
+import random
+sys.path.insert(0,'../utils/')
+import train_utils as utils
 
 def worker(weak_self):
 	self = weak_self()
@@ -19,7 +22,7 @@ def worker(weak_self):
 
 				if (input_path is not None) and (input_path not in self.files_accessed):
 					self.files_accessed.append(input_path)
-					inptu, label, weight = self.getDataFromPath(input_path)
+					image, label, weight = self.getDataFromPath(input_path)
 
 					with self.data_access_lock:
 						if self.image_volume.size != 0  and self.label_volume.size != 0:
@@ -41,7 +44,7 @@ def worker(weak_self):
 							self.label_volume = label
 							self.weight_volume = weight
 
-						self.num_imgs_in_ram = self.image_volume.shape[0]
+						self.n_imgs_in_ram = self.image_volume.shape[0]
 				
 				elif input_path == None:
 					self.iter_over_for_thread[name] = True
@@ -53,28 +56,38 @@ class ITERATOR(object):
 		self.data_folder_path = data_folder_path
 		self.mode = mode
 		self.batch_size = batch_size
+		self.num_threads = num_threads
 		self.iter_over = False
 		self.mode = 'train'
 		self.image_volume = np.array([])
 		self.label_volume = np.array([])
 		self.weight_volume = np.array([])
-		self.num_imgs_in_ram = 0
+		self.n_imgs_in_ram = 0
 		self.num_imgs_obt = 0
 		self.max_imgs_in_ram = max_imgs_in_ram
 		self.files_accessed = []
 		self.file_access_lock = threading.Lock()
 		self.data_access_lock = threading.Lock()
 		self.done_event = threading.Event()
+		self.iter_over_for_thread = {}
+
+		self.getFilePaths(data_folder_path)
 
 		for t_i in range(0,num_threads):
-			t = threading.Thread(target = data_loader_worker,args = (weakref.ref(self),))
+			t = threading.Thread(target = worker,args = (weakref.ref(self),))
 			t.setDaemon(True)
 			t.start()
 			self.iter_over_for_thread[t.name] = False
 
 	def getFilePaths(self,data_folder_path):
 		self.train_fls = [os.path.join(data_folder_path,'train',f) for f in os.listdir(os.path.join(data_folder_path,'train'))]
+		temp = [os.path.join(data_folder_path,'train1',f) for f in os.listdir(os.path.join(data_folder_path,'train1'))]
+		for each in temp:
+			self.train_fls.append(each)
+		temp = None
 		self.val_fls = [os.path.join(data_folder_path,'val',f) for f in os.listdir(os.path.join(data_folder_path,'val'))]
+		random.shuffle(self.train_fls)
+		random.shuffle(self.val_fls)
 
 	def popFilePath(self):
 		if self.mode == 'train':
@@ -82,7 +95,7 @@ class ITERATOR(object):
 				return self.train_fls.pop()
 			else:
 				return None
-		elif self.mode = 'val':
+		elif self.mode == 'val':
 			if len(self.val_fls) > 0:
 				return self.val_fls.pop()
 			else:
@@ -107,9 +120,9 @@ class ITERATOR(object):
 				weight_batch,self.weight_volume = np.split(self.weight_volume,[self.batch_size])
 
 				num_imgs_obt = image_batch.shape[0]
-				self.num_imgs_in_ram = self.image_volume.shape[0]
+				self.n_imgs_in_ram = self.image_volume.shape[0]
 
-			if ((sum(x == True for x in self.iter_over_for_thread.values()) == self.num_threads) and (self.num_imgs_in_ram == 0)):
+			if ((sum(x == True for x in self.iter_over_for_thread.values()) == self.num_threads) and (self.n_imgs_in_ram == 0)):
 				self.iter_over = True
 
 			if (num_imgs_obt > 0) or self.iter_over :
@@ -125,8 +138,10 @@ class ITERATOR(object):
 		self.image_volume = np.array([])
 		self.label_volume = np.array([])
 		self.weight_volume = np.array([])
-		self.num_imgs_in_ram = self.image_volume.shape[0]
-		self.file_iterator = PNGFileIterator(self.folder_path)
+		self.n_imgs_in_ram = self.image_volume.shape[0]
+		self.train_fls = []
+		self.val_fls = []
+		self.getFilePaths(self.data_folder_path)
 		self.files_accessed = []
 		for key in self.iter_over_for_thread:
 			self.iter_over_for_thread[key] = False	

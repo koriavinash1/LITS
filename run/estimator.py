@@ -5,14 +5,16 @@ import os, sys, shutil
 import pprint
 import time, argparse
 sys.path.insert(0,'../net/')
-from 2d_net import Tiramisu
+from net_2d import Tiramisu
 sys.path.insert(0,'../data_loader/')
 from data_loader import ITERATOR
 sys.path.insert(0,'../utils/')
+import train_utils as utils
 from train_utils import *
 from nptfmap import NpTfMap
 from summary_manager import SummaryManager
 from opts import opts
+from opts import default_opts
 
 class Estimator(object):
 	def __init__(self,
@@ -23,7 +25,7 @@ class Estimator(object):
 				 save_path):
 		
 		self.net = net_obj
-		self.data_iterator = ITERATOR(opts.data_folder, opts.batch_size, n_class=2, num_threads=1)
+		self.data_iterator = ITERATOR(opts.data_folder, mode = 'train',batch_size = opts.batch_size, num_threads=2)
 		print('preparing summary manager')
 		self.summary_manager = summary_manager
 		print('preparing nptfmaps')

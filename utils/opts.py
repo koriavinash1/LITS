@@ -6,13 +6,13 @@ default_opts = argparse.ArgumentParser(add_help=False)
 default_opts.add_argument('--num_epochs', 
 	default = 200, type = int, help = 'Number of Epochs ')
 default_opts.add_argument('--batch_size',
-	default = 2, type = int, help = 'Batch Size')
+	default = 1, type = int, help = 'Batch Size')
 default_opts.add_argument('--num_class',
 	default = 3, type = int, help = 'Number of classes')
 default_opts.add_argument('--num_channels',
 	default = 3, type = int, help = 'Number of channels')
 default_opts.add_argument('--chief_class',
-	default = 1, type = int, help = 'Chief class for dice_score')
+	default = 2, type = int, help = 'Chief class for dice_score')
 default_opts.add_argument('--num_gpus',
 	default = 1, type = int, help = 'Number of gpus')
 

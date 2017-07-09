@@ -15,7 +15,7 @@ class Tiramisu(object):
 				growth_rate = 16,
 				n_layers_per_block = 3, 
 				weight_decay = 5e-6, 
-				keep_prob = 0.6, 
+				keep_prob = 0.8, 
 				chief_class = 1,
 				metrics_list = ['loss', 'dice'],
 				optimizer = Adam(1e-4),
@@ -115,6 +115,13 @@ class Tiramisu(object):
 					l = BN_eLU_Conv(stack, growth_rate, collection_name = 'block_%d_layer_%d'%(n_pool-i-1,j), keep_prob=keep_prob, is_training=self.is_training)
 					block_to_upsample.append(l)
 					stack = tf.concat([stack, l],3)
+
+		#######################
+		#   More upsampling   #
+		#######################
+		l = Conv2D(stack,[3,3,stack.get_shape()[-1].value,4],collection_name = 'up_conv_512', padding = 'SAME')
+		stack = SpatialBilinearUpsampling(l,factor = 2)
+		l = None
 
 		#####################
 		# 		Outputs 	#

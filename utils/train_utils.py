@@ -102,6 +102,10 @@ def BatchNorm(inputs, bn_mode, decay = 0.9, epsilon=1e-3, collections = []):
 def ConvEluBatchNormDropout(x, shape, stride = 1,padding = 'VALID', bn_mode = tf.placeholder_with_default(False, shape = []), drop_mode = tf.placeholder_with_default(False, shape = []), keep_prob = 0.7, collections = []):
     return Dropout(BatchNorm(ConvElu(x,shape,stride,padding, collections = collections),bn_mode, collections = collections), drop_mode,keep_prob)
 
+def SpatialBilinearUpsampling(x,factor = 2):
+    shape = [tf.shape(x)[1]*factor,tf.shape(x)[2]*factor]
+    return tf.image.resize_bilinear(x,shape)
+
 def TransitionDown(inputs, n_filters,collection_name, keep_prob=0.8, is_training=tf.constant(False,dtype=tf.bool)):
     """ Apply first a BN_ReLu_conv layer with filter size = 1, and a max pooling with a factor 2  """
     l = BN_eLU_Conv(inputs, n_filters,collection_name=collection_name, filter_size=1, keep_prob=keep_prob, is_training=is_training)

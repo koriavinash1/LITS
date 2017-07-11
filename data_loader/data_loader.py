@@ -81,10 +81,6 @@ class ITERATOR(object):
 
 	def getFilePaths(self,data_folder_path):
 		self.train_fls = [os.path.join(data_folder_path,'train',f) for f in os.listdir(os.path.join(data_folder_path,'train'))]
-		temp = [os.path.join(data_folder_path,'train1',f) for f in os.listdir(os.path.join(data_folder_path,'train1'))]
-		for each in temp:
-			self.train_fls.append(each)
-		temp = None
 		self.val_fls = [os.path.join(data_folder_path,'val',f) for f in os.listdir(os.path.join(data_folder_path,'val'))]
 		random.shuffle(self.train_fls)
 		random.shuffle(self.val_fls)

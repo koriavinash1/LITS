@@ -207,4 +207,3 @@ class Estimator(object):
 		self.sess.run(self.net.reset_ops)
 		self.summary_manager.add_summary(summary,"val","per_epoch")
 		summary = None
-

@@ -6,7 +6,7 @@ default_opts = argparse.ArgumentParser(add_help=False)
 default_opts.add_argument('--num_epochs', 
 	default = 200, type = int, help = 'Number of Epochs ')
 default_opts.add_argument('--batch_size',
-	default = 1, type = int, help = 'Batch Size')
+	default = 3, type = int, help = 'Batch Size')
 default_opts.add_argument('--num_class',
 	default = 3, type = int, help = 'Number of classes')
 default_opts.add_argument('--num_channels',
@@ -16,9 +16,9 @@ default_opts.add_argument('--chief_class',
 default_opts.add_argument('--num_gpus',
 	default = 1, type = int, help = 'Number of gpus')
 
-default_opts.add_argument('--data_folder',default = '/windows/Lits2017/Dataset/hdf5/', help = 'data folder')
+default_opts.add_argument('--data_folder',default = '/media/brats/Varghese/lits2017/hdf5/', help = 'data folder')
 
-default_opts.add_argument('--output_dir', default = '/windows/Lits2017/outputs/', help = 'output directory for models and summaries')
+default_opts.add_argument('--output_dir', default = '/media/brats/Varghese/lits2017/outputs/', help = 'output directory for models and summaries')
 default_opts.add_argument('--run_name', default= 'tiramisu_liver_tumor_edge_weights_3channel_512_out', help = 'model and summaries will be saved in a folder with this name')
 default_opts.add_argument('--resume_training', default = False, type = bool, help = 'resume training or not ?')
 default_opts.add_argument('--load_model_from', default= None, help='specify directory from which to load model from')

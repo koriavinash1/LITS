@@ -29,8 +29,8 @@ def Deconv3D(data, filters, kernel_size, name, strides=(1,1,1), activation=tf.nn
 			name = name)
 	return output
 
-def MaxPooling3D(data, name, pool_size=(2,2,2), strides=(1,1,1)):
-	output = max_pooling3d(inputs,
+def MaxPooling3D(data, name, pool_size=(2,2,2), strides=(2,2,2)):
+	output = tf.layers.max_pooling3d(data,
 			pool_size,
 			strides,
 			padding='valid',
@@ -39,17 +39,16 @@ def MaxPooling3D(data, name, pool_size=(2,2,2), strides=(1,1,1)):
 	return output
 
 def BatchNormalization(data,name,training=False,activation=tf.nn.elu):
-	output = tf.layeres.batch_normalization(data,
-			axis=-1,
-			momentum=0.99,
+	output = tf.contrib.layers.batch_norm(data,
+			decay=0.99,
 			epsilon=0.001,
-			training=training,
+			is_training=training,
 			activation_fn =activation,
-			name=name)
+			scope=name)
 	return output
 
 def Concatenate(data, name):
 	output = tf.concat(data,
-			axis=0,
+			axis=-1,
 			name=name)
 	return output
